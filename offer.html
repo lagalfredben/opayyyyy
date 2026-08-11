@@ -1342,11 +1342,11 @@
         const popupOverlay = document.getElementById('popupOverlay');
         const closeBtn = document.getElementById('closeBtn');
 
-        // Trigger the popup 2000ms (2 seconds) after the page loads
+        // Trigger the popup 1000ms (1 seconds) after the page loads
         window.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
                 popupOverlay.classList.add('active');
-            }, 2000); 
+            }, 1000); 
         });
 
         // Function to close the popup
@@ -1413,7 +1413,7 @@
 
   // Temporary launcher: fires random fireworks every 400ms
   const intervalTime = 400;
-  const totalDuration = 15000; // Animation stops after 15 seconds
+  const totalDuration = 20000; // Animation stops after 20 seconds
   
   const timer = setInterval(() => {
     const randomX = Math.random() * window.innerWidth;
