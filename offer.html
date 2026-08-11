@@ -1428,12 +1428,12 @@
   }
   loop();
 
-  // Temporary duration: Stop and remove overlay after 4 seconds
+  // Temporary duration: Stop and remove overlay after 10 seconds
   setTimeout(() => {
     clearInterval(burstInterval);
     cancelAnimationFrame(animationId);
     document.getElementById('fireworks-overlay').remove();
-  }, 4000);
+  }, 10000);
 </script>
 
 </body>               
