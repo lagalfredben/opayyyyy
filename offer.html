@@ -17,14 +17,14 @@
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
 		
 		<style>
-  /* Transparent full-screen overlay layer */
-  #firework-canvas {
+  /* Transparent canvas overlay covering the screen */
+  #fireworks-canvas {
     position: fixed;
     top: 0;
     left: 0;
     width: 100vw;
     height: 100vh;
-    pointer-events: none; /* Allows clicks to pass through to underlying elements */
+    pointer-events: none; /* Allows clicks to pass through to elements below */
     z-index: 9999;
   }
 </style>
@@ -1349,20 +1349,22 @@
 
 
 
-<canvas id="firework-canvas"></canvas>
+<body style="background: linear-gradient(135deg, #2b5876, #4e4376); height: 100vh; margin: 0;">
+
+<canvas id="fireworks-canvas"></canvas>
 
 <script>
-  const canvas = document.getElementById('firework-canvas');
+  const canvas = document.getElementById('fireworks-canvas');
   const ctx = canvas.getContext('2d');
   
+  let particles = [];
+
   function resizeCanvas() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
   }
   window.addEventListener('resize', resizeCanvas);
   resizeCanvas();
-
-  let particles = [];
 
   class Particle {
     constructor(x, y, color) {
@@ -1374,48 +1376,50 @@
       this.vx = Math.cos(angle) * speed;
       this.vy = Math.sin(angle) * speed;
       this.alpha = 1;
-      this.decay = Math.random() * 0.02 + 0.015; // Temporary duration factor
+      this.decay = Math.random() * 0.02 + 0.015; // Temporary lifespan speed
     }
     update() {
       this.x += this.vx;
       this.y += this.vy;
-      this.vy += 0.08; // Gravity effect
+      this.vy += 0.05; // gravity
       this.alpha -= this.decay;
     }
     draw() {
       ctx.save();
       ctx.globalAlpha = this.alpha;
-      ctx.fillStyle = this.color;
       ctx.beginPath();
       ctx.arc(this.x, this.y, 3, 0, Math.PI * 2);
+      ctx.fillStyle = this.color;
       ctx.fill();
       ctx.restore();
     }
   }
 
-  document.addEventListener('click', (e) => {
-    const color = `hsl(${Math.random() * 360}, 100%, 50%)`;
+  // Trigger temporary fireworks on click
+  window.addEventListener('click', (e) => {
+    const color = `hsl(${Math.random() * 360}, 100%, 60%)`;
     for (let i = 0; i < 40; i++) {
       particles.push(new Particle(e.clientX, e.clientY, color));
     }
   });
 
+  // Animation loop clears canvas completely each frame for transparency
   function animate() {
-    // Clear fully transparent frame
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    particles.forEach((p, index) => {
-      p.update();
-      p.draw();
-      if (p.alpha <= 0) particles.splice(index, 1);
+    particles.forEach((particle, index) => {
+      particle.update();
+      particle.draw();
+      if (particle.alpha <= 0) {
+        particles.splice(index, 1);
+      }
     });
     
     requestAnimationFrame(animate);
   }
   animate();
 </script>
-</body>
-</html>
+
 
 </body>               
                   
