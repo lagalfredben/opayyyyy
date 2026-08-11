@@ -19,19 +19,20 @@
 
 	
 	<style>
-  /* Transparent full-screen overlay layer */
-  #fireworks-container {
+  /* Transparent full-screen overlay container */
+  #fireworks-overlay {
     position: fixed;
     top: 0;
     left: 0;
     width: 100vw;
     height: 100vh;
-    pointer-events: none; /* Lets clicks pass through to elements behind it */
-    overflow: hidden;
-    z-index: 9999;
+    pointer-events: none; /* Allows clicks to pass through to elements underneath */
     background: transparent;
+    z-index: 9999;
+    overflow: hidden;
   }
 
+  /* Individual firework particle styling */
   .firework-particle {
     position: absolute;
     width: 6px;
@@ -47,7 +48,7 @@
       opacity: 1;
     }
     100% {
-      transform: translate(var(--dx), var(--dy)) scale(0.2);
+      transform: translate(var(--dx), var(--dy)) scale(0.3);
       opacity: 0;
     }
   }
@@ -1368,46 +1369,64 @@
 
 
 
-					<body>
+					
 
-
-
-<div id="fireworks-container"></div>
+<div id="fireworks-overlay"></div>
 
 <script>
-  document.addEventListener("click", function(e) {
-    createFirework(e.clientX, e.clientY);
-  });
-
+  // Function to create a single explosion at coordinates (x, y)
   function createFirework(x, y) {
-    const container = document.getElementById("fireworks-container");
-    const particleCount = 30; // Number of sparks per click
-    const color = `hsl(${Math.random() * 360}, 100%, 50%)`;
+    const container = document.getElementById('fireworks-overlay');
+    if (!container) return;
+
+    const particleCount = 30; // Number of sparks per burst
+    const baseHue = Math.floor(Math.random() * 360);
 
     for (let i = 0; i < particleCount; i++) {
-      const particle = document.createElement("div");
-      particle.classList.add("firework-particle");
-      particle.style.backgroundColor = color;
-      particle.style.left = `${x}px`;
-      particle.style.top = `${y}px`;
-
-      // Calculate random spread vector/distance
+      const particle = document.createElement('div');
+      particle.className = 'firework-particle';
+      
+      // Random angle and travel distance
       const angle = Math.random() * Math.PI * 2;
-      const distance = Math.random() * 120 + 40; // Travel distance in px
+      const distance = Math.random() * 120 + 40; // distance in pixels
       const dx = Math.cos(angle) * distance;
       const dy = Math.sin(angle) * distance;
 
       particle.style.setProperty('--dx', `${dx}px`);
       particle.style.setProperty('--dy', `${dy}px`);
 
+      // Position at click/target point
+      particle.style.left = `${x}px`;
+      particle.style.top = `${y}px`;
+
+      // Random vibrant colors
+      particle.style.backgroundColor = `hsl(${baseHue + Math.random() * 50}, 100%, 60%)`;
+
       container.appendChild(particle);
 
-      // Remove element from DOM once animation completes (10s)
+      // Clean up particle element after animation completes
       setTimeout(() => {
         particle.remove();
-      }, 10000);
+      }, 1000);
     }
   }
+
+  // Temporary launcher: fires random fireworks every 400ms
+  const intervalTime = 400;
+  const totalDuration = 5000; // Animation stops after 5 seconds
+  
+  const timer = setInterval(() => {
+    const randomX = Math.random() * window.innerWidth;
+    const randomY = Math.random() * (window.innerHeight * 0.7); // upper/middle screen
+    createFirework(randomX, randomY);
+  }, intervalTime);
+
+  // Self-destruct and remove overlay completely after the temporary duration
+  setTimeout(() => {
+    clearInterval(timer);
+    const overlay = document.getElementById('fireworks-overlay');
+    if (overlay) overlay.remove();
+  }, totalDuration);
 </script>
 
 
