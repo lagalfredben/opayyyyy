@@ -26,28 +26,23 @@
 
 
  <style>
-        /* Reset margins and ensure the canvas fills the viewport */
-        html, body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            /* Transparent background allows underlying content to show through */
-            background-color: transparent; 
-        }
-
-        canvas {
-            display: block;
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none; /* Allows user clicks to pass through the animation */
-            z-index: 9999; /* Keeps the fireworks layered on top of other content */
-        }
-    </style>
+  /* Transparent overlay container covering the screen */
+  #fireworks-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: transparent;
+    pointer-events: none; /* Lets clicks pass through to elements behind */
+    z-index: 9999;
+  }
+  canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+</style>
 	
 
 
@@ -1362,139 +1357,84 @@
 
 					<body>
 
-    <canvas id="fireworksCanvas"></canvas>
+   <div id="fireworks-overlay">
+  <canvas id="fw-canvas"></canvas>
+</div>
 
-    <script>
-        const canvas = document.getElementById('fireworksCanvas');
-        const ctx = canvas.getContext('2d');
+<script>
+  const canvas = document.getElementById('fw-canvas');
+  const ctx = canvas.getContext('2d');
+  
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
 
-        // Resize canvas dynamically to match the viewport window
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        }
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
+  class Particle {
+    constructor(x, y, color) {
+      this.x = x;
+      this.y = y;
+      this.color = color;
+      const angle = Math.random() * Math.PI * 2;
+      const speed = Math.random() * 6 + 2;
+      this.vx = Math.cos(angle) * speed;
+      this.vy = Math.sin(angle) * speed;
+      this.alpha = 1;
+      this.decay = Math.random() * 0.02 + 0.015;
+    }
+    update() {
+      this.x += this.vx;
+      this.y += this.vy;
+      this.vy += 0.08; // gravity
+      this.alpha -= this.decay;
+    }
+    draw() {
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, this.alpha);
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, 3, 0, Math.PI * 2);
+      ctx.fillStyle = this.color;
+      ctx.fill();
+      ctx.restore();
+    }
+  }
 
-        const fireworks = [];
-        const particles = [];
+  let particles = [];
+  function addFirework() {
+    const x = Math.random() * canvas.width;
+    const y = Math.random() * (canvas.height / 2);
+    const color = `hsl(${Math.random() * 360}, 100%, 60%)`;
+    for (let i = 0; i < 50; i++) {
+      particles.push(new Particle(x, y, color));
+    }
+  }
 
-        // Helper function to get random numbers within a range
-        function random(min, max) {
-            return Math.random() * (max - min) + min;
-        }
+  // Launch initial bursts
+  for(let j = 0; j < 3; j++) addFirework();
+  let burstInterval = setInterval(addFirework, 600);
 
-        // Firework Rocket Class (Launches from the bottom)
-        class Firework {
-            constructor() {
-                this.x = random(0, canvas.width);
-                this.y = canvas.height;
-                this.targetX = random(canvas.width * 0.1, canvas.width * 0.9);
-                this.targetY = random(canvas.height * 0.1, canvas.height * 0.5);
-                this.distanceToTarget = Math.hypot(this.targetX - this.x, this.targetY - this.y);
-                this.distanceTraveled = 0;
-                this.angle = Math.atan2(this.targetY - this.y, this.targetX - this.x);
-                this.speed = 3;
-                this.hue = random(0, 360);
-            }
+  // Animation loop
+  let animationId;
+  function loop() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles.forEach((p, index) => {
+      p.update();
+      p.draw();
+      if (p.alpha <= 0) particles.splice(index, 1);
+    });
+    animationId = requestAnimationFrame(loop);
+  }
+  loop();
 
-            update(index) {
-                // Calculate current coordinates based on speed and angle
-                let vx = Math.cos(this.angle) * this.speed;
-                let vy = Math.sin(this.angle) * this.speed;
-                this.x += vx;
-                this.y += vy;
-                this.distanceTraveled = Math.hypot(this.x - (this.targetX - Math.cos(this.angle) * this.distanceToTarget), this.y - (this.targetY - Math.sin(this.angle) * this.distanceToTarget));
-
-                // Explode upon reaching target height
-                if (this.y <= this.targetY) {
-                    explode(this.targetX, this.targetY, this.hue);
-                    fireworks.splice(index, 1);
-                }
-            }
-
-            draw() {
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, 2, 0, Math.PI * 2);
-                ctx.fillStyle = `hsl(${this.hue}, 100%, 60%)`;
-                ctx.fill();
-            }
-        }
-
-        // Particle Class (The actual exploding burst effects)
-        class Particle {
-            constructor(x, y, hue) {
-                this.x = x;
-                this.y = y;
-                this.angle = random(0, Math.PI * 2);
-                this.speed = random(1, 6);
-                this.friction = 0.95; // Gradually slows down particles
-                this.gravity = 0.07;  // Drifts particles downward over time
-                this.hue = random(hue - 20, hue + 20); // Adds slight color variance
-                this.alpha = 1;       // Tracks fading transparency
-                this.decay = random(0.01, 0.02); // Controls how fast the explosion fades
-            }
-
-            update(index) {
-                this.speed *= this.friction;
-                this.x += Math.cos(this.angle) * this.speed;
-                this.y += Math.sin(this.angle) * this.speed + this.gravity;
-                this.alpha -= this.decay; // Decreases opacity
-
-                // Safely clear out dead particles from memory
-                if (this.alpha <= 0) {
-                    particles.splice(index, 1);
-                }
-            }
-
-            draw() {
-                ctx.save();
-                // "source-over" composite keeps canvas pixel manipulation transparent
-                ctx.globalCompositeOperation = 'source-over';
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, random(1, 3), 0, Math.PI * 2);
-                ctx.fillStyle = `hsla(${this.hue}, 100%, 50%, ${this.alpha})`;
-                ctx.fill();
-                ctx.restore();
-            }
-        }
-
-        // Generate dynamic burst of 60 particles upon rocket explosion
-        function explode(x, y, hue) {
-            for (let i = 0; i < 60; i++) {
-                particles.push(new Particle(x, y, hue));
-            }
-        }
-
-        // Core animation controller
-        function animate() {
-            requestAnimationFrame(animate);
-
-            // Crucial step: Clear original pixels cleanly to maintain total transparency
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // Periodically launch a new firework rocket
-            if (random(0, 1) < 0.04) {
-                fireworks.push(new Firework());
-            }
-
-            // Loop and render active elements
-            let fLength = fireworks.length;
-            while (fLength--) {
-                fireworks[fLength].draw();
-                fireworks[fLength].update(fLength);
-            }
-
-            let pLength = particles.length;
-            while (pLength--) {
-                particles[pLength].draw();
-                particles[pLength].update(pLength);
-            }
-        }
-
-        // Fire the code
-        animate();
-    </script>
+  // Temporary duration: Stop and remove overlay after 4 seconds
+  setTimeout(() => {
+    clearInterval(burstInterval);
+    cancelAnimationFrame(animationId);
+    document.getElementById('fireworks-overlay').remove();
+  }, 4000);
+</script>
 
 </body>               
                   
